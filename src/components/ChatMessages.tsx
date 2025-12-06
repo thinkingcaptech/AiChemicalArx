@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Bot, User, AlertCircle, Copy, Check } from 'lucide-react';
+import { CodeBlock } from './CodeBlock';
 import type { Message } from '../types';
 
 interface ChatMessagesProps {
@@ -10,7 +11,8 @@ interface ChatMessagesProps {
 
 export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading, onQuickAction }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [copiedId, setCopiedId] = React.useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedCodeIndex, setCopiedCodeIndex] = useState<string | null>(null);
 
   const quickActions = [
     {
@@ -49,27 +51,76 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading,
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const renderContent = (content: string) => {
-    // Simple markdown-like rendering
+  const copyCodeToClipboard = async (code: string, index: string) => {
+    await navigator.clipboard.writeText(code);
+    setCopiedCodeIndex(index);
+    setTimeout(() => setCopiedCodeIndex(null), 2000);
+  };
+
+  const renderContent = (content: string, messageId: string) => {
+    // Parse content into segments (text and code blocks)
+    const segments: Array<{ type: 'text' | 'code'; content: string; language?: string }> = [];
+    const codeBlockRegex = /```(\w*)\n?([\s\S]*?)```/g;
+    
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      // Add text before this code block
+      if (match.index > lastIndex) {
+        segments.push({
+          type: 'text',
+          content: content.slice(lastIndex, match.index)
+        });
+      }
+      
+      // Add the code block
+      segments.push({
+        type: 'code',
+        language: match[1] || 'text',
+        content: match[2].trim()
+      });
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text after last code block
+    if (lastIndex < content.length) {
+      segments.push({
+        type: 'text',
+        content: content.slice(lastIndex)
+      });
+    }
+    
+    return (
+      <div className="prose-alchemical">
+        {segments.map((segment, index) => {
+          if (segment.type === 'code') {
+            const codeId = `${messageId}-code-${index}`;
+            return (
+              <CodeBlock
+                key={codeId}
+                code={segment.content}
+                language={segment.language || 'text'}
+                onCopy={() => copyCodeToClipboard(segment.content, codeId)}
+                copied={copiedCodeIndex === codeId}
+              />
+            );
+          }
+          
+          // Render text content
+          return <div key={index}>{renderTextContent(segment.content)}</div>;
+        })}
+      </div>
+    );
+  };
+
+  const renderTextContent = (content: string) => {
     const lines = content.split('\n');
     const elements: React.ReactNode[] = [];
-    let inCodeBlock = false;
-    let codeContent = '';
 
     lines.forEach((line, index) => {
-      if (line.startsWith('```')) {
-        if (inCodeBlock) {
-          elements.push(
-            <pre key={`code-${index}`} className="bg-[var(--color-void)] border border-[var(--color-mystic)] rounded-lg p-4 my-2 overflow-x-auto">
-              <code className="text-sm font-mono text-[var(--color-sage)]">{codeContent}</code>
-            </pre>
-          );
-          codeContent = '';
-        }
-        inCodeBlock = !inCodeBlock;
-      } else if (inCodeBlock) {
-        codeContent += (codeContent ? '\n' : '') + line;
-      } else if (line.startsWith('# ')) {
+      if (line.startsWith('# ')) {
         elements.push(
           <h1 key={index} className="text-xl font-bold text-[var(--color-gold)] my-2">
             {line.slice(2)}
@@ -110,7 +161,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading,
       }
     });
 
-    return <div className="prose-alchemical">{elements}</div>;
+    return elements;
   };
 
   const renderInlineFormatting = (text: string): React.ReactNode => {
@@ -192,7 +243,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading,
               </div>
             ) : (
               <>
-                {renderContent(message.content)}
+                {renderContent(message.content, message.id)}
                 {message.isStreaming && (
                   <span className="inline-block w-2 h-4 bg-[var(--color-gold)] ml-1 animate-pulse" />
                 )}
