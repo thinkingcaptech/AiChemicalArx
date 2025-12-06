@@ -73,21 +73,32 @@ async function generateImageWithGemini(
 ): Promise<ImageGenerationResponse[]> {
   console.log('[Gemini Image Gen] Starting request with prompt:', request.prompt);
   
+  // Gemini image generation uses the standard generateContent endpoint
+  // with response_modalities set to include Image
+  const model = 'gemini-2.0-flash-exp'; // Image generation model
+  
   let response: Response;
   try {
     response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:generateImages?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: request.prompt,
-          number_of_images: request.n || 1,
-          aspectRatio: '1:1',
-          safetyFilterLevel: 'block_some',
-          personGenerationMode: 'dont_allow',
+          contents: [
+            {
+              parts: [
+                {
+                  text: `Generate an image: ${request.prompt}`
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            responseModalities: ['Text', 'Image'],
+          }
         }),
       }
     );
@@ -111,19 +122,30 @@ async function generateImageWithGemini(
   }
 
   const data = await response.json();
-  console.log('[Gemini Image Gen] Success, received data:', data);
+  console.log('[Gemini Image Gen] Success, received data:', JSON.stringify(data, null, 2));
   
-  if (!data.images || data.images.length === 0) {
-    throw new Error('No images returned from Gemini');
+  // Parse the response to extract image data
+  const images: ImageGenerationResponse[] = [];
+  
+  if (data.candidates && data.candidates.length > 0) {
+    const candidate = data.candidates[0];
+    if (candidate.content && candidate.content.parts) {
+      for (const part of candidate.content.parts) {
+        if (part.inlineData && part.inlineData.mimeType?.startsWith('image/')) {
+          // Convert base64 image data to a data URL
+          const dataUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+          images.push({ imageUrl: dataUrl });
+        }
+      }
+    }
   }
   
-  return data.images.map((item: { url?: string; gcsUri?: string }) => {
-    const imageUrl = item.url || item.gcsUri || '';
-    if (!imageUrl) {
-      throw new Error('Image URL not found in Gemini response');
-    }
-    return { imageUrl };
-  });
+  if (images.length === 0) {
+    console.error('[Gemini Image Gen] No images found in response:', data);
+    throw new Error('No images returned from Gemini. The model may not support image generation for this prompt.');
+  }
+  
+  return images;
 }
 
 export async function generateImage(
