@@ -1,6 +1,8 @@
 import { useRef, useEffect, useState } from 'react';
 import { Bot, User, AlertCircle, Copy, Check } from 'lucide-react';
 import { CodeBlock } from './CodeBlock';
+import { ImageViewer } from './ImageViewer';
+import { extractImages, removeImagesFromContent } from '../utils/imageUtils';
 import type { Message } from '../types';
 
 interface ChatMessagesProps {
@@ -58,6 +60,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading,
   };
 
   const renderContent = (content: string, messageId: string) => {
+    // Extract images from content and get clean text
+    const extractedImages = extractImages(content);
+    const cleanContent = removeImagesFromContent(content);
+    
     // Parse content into segments (text and code blocks)
     const segments: Array<{ type: 'text' | 'code'; content: string; language?: string }> = [];
     const codeBlockRegex = /```(\w*)\n?([\s\S]*?)```/g;
@@ -65,12 +71,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading,
     let lastIndex = 0;
     let match;
     
-    while ((match = codeBlockRegex.exec(content)) !== null) {
+    while ((match = codeBlockRegex.exec(cleanContent)) !== null) {
       // Add text before this code block
       if (match.index > lastIndex) {
         segments.push({
           type: 'text',
-          content: content.slice(lastIndex, match.index)
+          content: cleanContent.slice(lastIndex, match.index)
         });
       }
       
@@ -85,15 +91,20 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading,
     }
     
     // Add remaining text after last code block
-    if (lastIndex < content.length) {
+    if (lastIndex < cleanContent.length) {
       segments.push({
         type: 'text',
-        content: content.slice(lastIndex)
+        content: cleanContent.slice(lastIndex)
       });
     }
     
     return (
       <div className="prose-alchemical">
+        {/* Show extracted images first */}
+        {extractedImages.length > 0 && (
+          <ImageViewer images={extractedImages} className="mb-3" />
+        )}
+        
         {segments.map((segment, index) => {
           if (segment.type === 'code') {
             const codeId = `${messageId}-code-${index}`;
@@ -243,7 +254,17 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading,
               </div>
             ) : (
               <>
-                {renderContent(message.content, message.id)}
+                {/* Display images if present */}
+                {message.images && message.images.length > 0 && (
+                  <ImageViewer 
+                    images={message.images} 
+                    className="mb-3"
+                  />
+                )}
+                
+                {/* Display text content */}
+                {message.content && renderContent(message.content, message.id)}
+                
                 {message.isStreaming && (
                   <span className="inline-block w-2 h-4 bg-[var(--color-gold)] ml-1 animate-pulse" />
                 )}

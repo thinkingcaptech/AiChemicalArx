@@ -19,10 +19,18 @@ export interface AIModel {
 }
 
 // Message Types
+export interface MessageImage {
+  url: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  images?: MessageImage[];
   timestamp: number;
   provider?: AIProvider;
   model?: string;

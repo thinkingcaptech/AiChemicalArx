@@ -113,11 +113,12 @@ export function createNewChat(provider: string, model: string): Chat {
   };
 }
 
-export function createMessage(role: Message['role'], content: string): Message {
+export function createMessage(role: Message['role'], content: string, images?: Message['images']): Message {
   return {
     id: generateId(),
     role,
     content,
+    ...(images && { images }),
     timestamp: Date.now(),
   };
 }
