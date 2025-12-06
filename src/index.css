@@ -1,0 +1,272 @@
+@import "tailwindcss";
+
+/* Alchemical Theme Custom Properties */
+:root {
+  --color-void: #0d0a14;
+  --color-obsidian: #1a1625;
+  --color-amethyst: #2d2640;
+  --color-mystic: #3d3557;
+  --color-ethereal: #9d8dc7;
+  --color-gold: #d4af37;
+  --color-transmute: #ffd700;
+  --color-elixir: #7b68ee;
+  --color-arcane: #663399;
+  --color-sage: #98fb98;
+  --color-ember: #ff6b35;
+  --color-spirit: #e8e4f0;
+  --color-parchment: #f5f0e6;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-obsidian);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-mystic);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ethereal);
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, var(--color-void) 0%, var(--color-obsidian) 50%, var(--color-amethyst) 100%);
+  color: var(--color-spirit);
+  overflow: hidden;
+}
+
+/* Alchemical Glow Effects */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3), 0 0 40px rgba(212, 175, 55, 0.1);
+}
+
+.glow-elixir {
+  box-shadow: 0 0 20px rgba(123, 104, 238, 0.3), 0 0 40px rgba(123, 104, 238, 0.1);
+}
+
+.glow-arcane {
+  box-shadow: 0 0 15px rgba(102, 51, 153, 0.4);
+}
+
+/* Mystical Animations */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes transmute {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Alchemical Symbol Background Pattern */
+.alchemical-bg {
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(123, 104, 238, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(102, 51, 153, 0.03) 0%, transparent 70%);
+}
+
+/* Message Bubble Styles */
+.message-user {
+  background: linear-gradient(135deg, var(--color-arcane) 0%, var(--color-elixir) 100%);
+}
+
+.message-assistant {
+  background: linear-gradient(135deg, var(--color-amethyst) 0%, var(--color-mystic) 100%);
+  border: 1px solid rgba(157, 141, 199, 0.2);
+}
+
+/* Input Field Styles */
+.input-mystical {
+  background: var(--color-obsidian);
+  border: 1px solid var(--color-mystic);
+  transition: all 0.3s ease;
+}
+
+.input-mystical:focus {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+  outline: none;
+}
+
+/* Button Styles */
+.btn-alchemical {
+  background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-transmute) 100%);
+  color: var(--color-void);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-alchemical:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+}
+
+.btn-alchemical:active {
+  transform: translateY(0);
+}
+
+.btn-arcane {
+  background: linear-gradient(135deg, var(--color-arcane) 0%, var(--color-elixir) 100%);
+  color: var(--color-spirit);
+  transition: all 0.3s ease;
+}
+
+.btn-arcane:hover {
+  box-shadow: 0 5px 20px rgba(123, 104, 238, 0.4);
+}
+
+/* Card Styles */
+.card-mystical {
+  background: rgba(26, 22, 37, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(157, 141, 199, 0.2);
+  border-radius: 12px;
+}
+
+/* Markdown Content Styles */
+.prose-alchemical {
+  color: var(--color-spirit);
+}
+
+.prose-alchemical h1,
+.prose-alchemical h2,
+.prose-alchemical h3 {
+  color: var(--color-gold);
+}
+
+.prose-alchemical code {
+  background: var(--color-obsidian);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9em;
+}
+
+.prose-alchemical pre {
+  background: var(--color-void);
+  border: 1px solid var(--color-mystic);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.prose-alchemical pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.prose-alchemical a {
+  color: var(--color-ethereal);
+  text-decoration: underline;
+}
+
+.prose-alchemical blockquote {
+  border-left: 3px solid var(--color-gold);
+  padding-left: 1rem;
+  color: var(--color-ethereal);
+  font-style: italic;
+}
+
+/* Loading Spinner */
+.spinner-alchemical {
+  border: 3px solid var(--color-mystic);
+  border-top-color: var(--color-gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Sidebar Styles */
+.sidebar-mystical {
+  background: linear-gradient(180deg, var(--color-obsidian) 0%, var(--color-void) 100%);
+  border-right: 1px solid rgba(157, 141, 199, 0.2);
+}
+
+/* Provider Badge Colors */
+.provider-openai {
+  background: linear-gradient(135deg, #10a37f 0%, #1a7f5a 100%);
+}
+
+.provider-anthropic {
+  background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+}
+
+.provider-grok {
+  background: linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%);
+}
+
+/* Tooltip */
+.tooltip-mystical {
+  background: var(--color-obsidian);
+  border: 1px solid var(--color-mystic);
+  color: var(--color-spirit);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Selection */
+::selection {
+  background: rgba(212, 175, 55, 0.3);
+  color: var(--color-spirit);
+}
+
+/* Focus Visible */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* Transitions */
+.transition-mystical {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

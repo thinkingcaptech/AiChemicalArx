@@ -1,0 +1,151 @@
+import React, { useState, useEffect } from 'react';
+import { Menu } from 'lucide-react';
+import { Sidebar } from './components/Sidebar';
+import { ChatMessages } from './components/ChatMessages';
+import { ChatInput } from './components/ChatInput';
+import { SettingsModal } from './components/SettingsModal';
+import { WelcomeModal } from './components/WelcomeModal';
+import { useChat } from './hooks/useChat';
+import type { APIKeys } from './types';
+
+const WELCOME_SHOWN_KEY = 'aichemyarx_welcome_shown';
+
+function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+
+  const {
+    chats,
+    currentChat,
+    isLoading,
+    settings,
+    updateSettings,
+    startNewChat,
+    selectChat,
+    deleteChat,
+    sendMessage,
+    cancelGeneration,
+    changeProvider,
+    clearHistory,
+  } = useChat();
+
+  // Show welcome modal on first visit or if no API keys are set
+  useEffect(() => {
+    const welcomeShown = localStorage.getItem(WELCOME_SHOWN_KEY);
+    const hasAnyKey = Object.values(settings.apiKeys).some(key => key && key.trim() !== '');
+    
+    if (!welcomeShown || !hasAnyKey) {
+      setWelcomeOpen(true);
+    }
+  }, []);
+
+  const handleWelcomeClose = () => {
+    localStorage.setItem(WELCOME_SHOWN_KEY, 'true');
+    setWelcomeOpen(false);
+  };
+
+  const handleWelcomeSaveKeys = (keys: APIKeys) => {
+    updateSettings({ apiKeys: keys });
+    localStorage.setItem(WELCOME_SHOWN_KEY, 'true');
+  };
+
+  const currentProvider = currentChat?.provider || settings.defaultProvider;
+  const currentModel = currentChat?.model || settings.defaultModel;
+  const hasApiKey = Boolean(settings.apiKeys[currentProvider]);
+
+  const handleSendMessage = async (content: string) => {
+    try {
+      await sendMessage(content);
+    } catch (error) {
+      // Error is handled in the hook
+      console.error(error);
+    }
+  };
+
+  return (
+    <div className="h-full flex alchemical-bg">
+      {/* Sidebar */}
+      <Sidebar
+        chats={chats}
+        currentChatId={currentChat?.id || null}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onNewChat={() => {
+          startNewChat();
+          setSidebarOpen(false);
+        }}
+        onSelectChat={(id) => {
+          selectChat(id);
+          setSidebarOpen(false);
+        }}
+        onDeleteChat={deleteChat}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
+
+      {/* Main Chat Area */}
+      <main className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="flex items-center gap-3 p-4 border-b border-[var(--color-mystic)] bg-[var(--color-obsidian)]/50 backdrop-blur-sm">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-lg hover:bg-[var(--color-mystic)] transition-colors"
+            title="Toggle sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold truncate">
+              {currentChat?.title || 'New Chat'}
+            </h2>
+            {currentChat && (
+              <p className="text-xs text-[var(--color-ethereal)]">
+                {currentChat.messages.length} message{currentChat.messages.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+        </header>
+
+        {/* Messages */}
+        <ChatMessages
+          messages={currentChat?.messages || []}
+          isLoading={isLoading}
+          onQuickAction={handleSendMessage}
+        />
+
+        {/* Input */}
+        <ChatInput
+          onSend={handleSendMessage}
+          onCancel={cancelGeneration}
+          isLoading={isLoading}
+          provider={currentProvider}
+          model={currentModel}
+          onProviderChange={changeProvider}
+          hasApiKey={hasApiKey}
+          apiKeys={settings.apiKeys}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+      </main>
+
+      {/* Welcome Modal */}
+      <WelcomeModal
+        isOpen={welcomeOpen}
+        onClose={handleWelcomeClose}
+        apiKeys={settings.apiKeys}
+        onSaveKeys={handleWelcomeSaveKeys}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        onSave={updateSettings}
+        onClearHistory={clearHistory}
+      />
+    </div>
+  );
+}
+
+export default App;
