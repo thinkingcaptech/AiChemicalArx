@@ -77,7 +77,9 @@ function App() {
         return;
       }
 
-      console.log(`Generating image with ${currentProvider} (${currentModel}) for prompt: "${prompt}"`);
+      console.log(`🎨 Generating image with ${currentProvider} (${currentModel})`);
+      console.log(`📝 Prompt: "${prompt}"`);
+      console.log(`🔑 API key configured: ${apiKey.substring(0, 10)}...`);
       
       const results = await generateImage(currentProvider, currentModel, apiKey, {
         prompt: prompt,
@@ -85,7 +87,7 @@ function App() {
       });
 
       if (results.length > 0) {
-        console.log(`Image generated successfully: ${results[0].imageUrl}`);
+        console.log(`✅ Image generated successfully: ${results[0].imageUrl}`);
         // Create a message with the generated image
         const imageMessage = `Generated image for: "${prompt}"\n\n![Generated Image](${results[0].imageUrl})`;
         await sendMessage(imageMessage);
@@ -94,8 +96,15 @@ function App() {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to generate image';
-      console.error('Image generation error:', error);
-      alert(`⚠️ Image generation failed:\n\n${message}`);
+      console.error('❌ Image generation error:', error);
+      
+      // Provide helpful error messages
+      let userMessage = message;
+      if (message.includes('Failed to fetch') || message.includes('Network error')) {
+        userMessage = `Network error - please check:\n\n• Your internet connection\n• API key is valid\n• ${currentProvider === 'openai' ? 'OpenAI API' : 'Google API'} is accessible`;
+      }
+      
+      alert(`⚠️ Image generation failed:\n\n${userMessage}`);
     } finally {
       setIsGeneratingImage(false);
     }
