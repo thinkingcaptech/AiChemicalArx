@@ -33,11 +33,22 @@ async function generateImageWithOpenAI(
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`OpenAI image generation failed: ${error.error?.message || 'Unknown error'}`);
+    let errorMsg = 'Unknown error';
+    try {
+      const error = await response.json();
+      errorMsg = error.error?.message || error.message || JSON.stringify(error);
+    } catch (e) {
+      errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new Error(`OpenAI image generation failed: ${errorMsg}`);
   }
 
   const data = await response.json();
+  
+  if (!data.data || data.data.length === 0) {
+    throw new Error('No images returned from OpenAI');
+  }
+  
   return data.data.map((item: { url: string; revised_prompt?: string }) => ({
     imageUrl: item.url,
     revisedPrompt: item.revised_prompt,
@@ -48,7 +59,7 @@ async function generateImageWithGemini(
   apiKey: string,
   request: ImageGenerationRequest
 ): Promise<ImageGenerationResponse[]> {
-  // Gemini uses the Imagen 3 model via generateContent
+  // Gemini image generation via Imagen model
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:generateImages?key=${apiKey}`,
     {
@@ -67,14 +78,29 @@ async function generateImageWithGemini(
   );
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Gemini image generation failed: ${error.error?.message || 'Unknown error'}`);
+    let errorMsg = 'Unknown error';
+    try {
+      const error = await response.json();
+      errorMsg = error.error?.message || error.message || JSON.stringify(error);
+    } catch (e) {
+      errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new Error(`Gemini image generation failed: ${errorMsg}`);
   }
 
   const data = await response.json();
-  return data.images?.map((item: { url?: string; gcsUri?: string }) => ({
-    imageUrl: item.url || item.gcsUri || '',
-  })) || [];
+  
+  if (!data.images || data.images.length === 0) {
+    throw new Error('No images returned from Gemini');
+  }
+  
+  return data.images.map((item: { url?: string; gcsUri?: string }) => {
+    const imageUrl = item.url || item.gcsUri || '';
+    if (!imageUrl) {
+      throw new Error('Image URL not found in Gemini response');
+    }
+    return { imageUrl };
+  });
 }
 
 export async function generateImage(

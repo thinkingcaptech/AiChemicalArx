@@ -71,25 +71,31 @@ function App() {
     setIsGeneratingImage(true);
     try {
       const apiKey = settings.apiKeys[currentProvider];
-      if (!apiKey) {
+      if (!apiKey || apiKey.trim() === '') {
         alert('API key not configured for this provider');
+        setIsGeneratingImage(false);
         return;
       }
 
+      console.log(`Generating image with ${currentProvider} (${currentModel}) for prompt: "${prompt}"`);
+      
       const results = await generateImage(currentProvider, currentModel, apiKey, {
         prompt: prompt,
         n: 1,
       });
 
       if (results.length > 0) {
+        console.log(`Image generated successfully: ${results[0].imageUrl}`);
         // Create a message with the generated image
         const imageMessage = `Generated image for: "${prompt}"\n\n![Generated Image](${results[0].imageUrl})`;
         await sendMessage(imageMessage);
+      } else {
+        throw new Error('No image URL returned from generation service');
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to generate image';
-      alert(`Image generation failed: ${message}`);
       console.error('Image generation error:', error);
+      alert(`⚠️ Image generation failed:\n\n${message}`);
     } finally {
       setIsGeneratingImage(false);
     }
