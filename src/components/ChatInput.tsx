@@ -190,8 +190,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <button
             type="button"
             onClick={() => {
+              console.log('🖱️ Image gen button clicked!');
+              console.log('📝 Message:', message.trim());
+              console.log('🔧 onGenerateImage:', !!onGenerateImage);
+              console.log('⏳ isLoading:', isLoading, 'isGeneratingImage:', isGeneratingImage);
               if (message.trim() && onGenerateImage && !isLoading && !isGeneratingImage) {
+                console.log('✅ Calling onGenerateImage...');
                 onGenerateImage(message.trim());
+              } else {
+                console.log('❌ Conditions not met for image generation');
               }
             }}
             disabled={!message.trim() || !hasApiKey || isLoading || isGeneratingImage}

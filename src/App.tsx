@@ -66,7 +66,15 @@ function App() {
   };
 
   const handleGenerateImage = async (prompt: string) => {
-    if (!currentChat) return;
+    console.log('🎨 handleGenerateImage called with prompt:', prompt);
+    console.log('📋 Current chat:', currentChat?.id);
+    console.log('🔧 Current provider:', currentProvider, 'model:', currentModel);
+    
+    // Start a new chat if needed
+    if (!currentChat) {
+      console.log('📝 No current chat, starting new one...');
+      startNewChat();
+    }
     
     setIsGeneratingImage(true);
     try {
@@ -87,7 +95,7 @@ function App() {
       });
 
       if (results.length > 0) {
-        console.log(`✅ Image generated successfully: ${results[0].imageUrl}`);
+        console.log(`✅ Image generated successfully: ${results[0].imageUrl.substring(0, 100)}...`);
         // Create a message with the generated image
         const imageMessage = `Generated image for: "${prompt}"\n\n![Generated Image](${results[0].imageUrl})`;
         await sendMessage(imageMessage);
@@ -101,7 +109,7 @@ function App() {
       // Provide helpful error messages
       let userMessage = message;
       if (message.includes('Failed to fetch') || message.includes('Network error')) {
-        userMessage = `Network error - please check:\n\n• Your internet connection\n• API key is valid\n• ${currentProvider === 'openai' ? 'OpenAI API' : 'Google API'} is accessible`;
+        userMessage = `Network error - please check:\n\n• Your internet connection\n• API key is valid\n• ${currentProvider === 'openai' ? 'OpenAI API' : currentProvider === 'grok' ? 'xAI API' : 'Google API'} is accessible`;
       }
       
       alert(`⚠️ Image generation failed:\n\n${userMessage}`);
