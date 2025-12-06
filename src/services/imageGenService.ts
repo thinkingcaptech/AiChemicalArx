@@ -17,33 +17,45 @@ async function generateImageWithOpenAI(
   apiKey: string,
   request: ImageGenerationRequest
 ): Promise<ImageGenerationResponse[]> {
-  const response = await fetch('https://api.openai.com/v1/images/generations', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'dall-e-3',
-      prompt: request.prompt,
-      size: request.size || '1024x1024',
-      quality: request.quality || 'standard',
-      n: request.n || 1,
-    }),
-  });
+  console.log('[OpenAI Image Gen] Starting request with prompt:', request.prompt);
+  
+  let response: Response;
+  try {
+    response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt: request.prompt,
+        size: request.size || '1024x1024',
+        quality: request.quality || 'standard',
+        n: request.n || 1,
+      }),
+    });
+  } catch (error) {
+    console.error('[OpenAI Image Gen] Network error:', error);
+    throw new Error(`Network error: ${error instanceof Error ? error.message : 'Failed to fetch'}`);
+  }
+
+  console.log('[OpenAI Image Gen] Response status:', response.status);
 
   if (!response.ok) {
     let errorMsg = 'Unknown error';
     try {
       const error = await response.json();
+      console.error('[OpenAI Image Gen] API error response:', error);
       errorMsg = error.error?.message || error.message || JSON.stringify(error);
     } catch (e) {
       errorMsg = `HTTP ${response.status}: ${response.statusText}`;
     }
-    throw new Error(`OpenAI image generation failed: ${errorMsg}`);
+    throw new Error(`OpenAI: ${errorMsg}`);
   }
 
   const data = await response.json();
+  console.log('[OpenAI Image Gen] Success, received data:', data);
   
   if (!data.data || data.data.length === 0) {
     throw new Error('No images returned from OpenAI');
@@ -59,36 +71,47 @@ async function generateImageWithGemini(
   apiKey: string,
   request: ImageGenerationRequest
 ): Promise<ImageGenerationResponse[]> {
-  // Gemini image generation via Imagen model
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:generateImages?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt: request.prompt,
-        number_of_images: request.n || 1,
-        aspectRatio: '1:1', // Default square images
-        safetyFilterLevel: 'block_some',
-        personGenerationMode: 'dont_allow',
-      }),
-    }
-  );
+  console.log('[Gemini Image Gen] Starting request with prompt:', request.prompt);
+  
+  let response: Response;
+  try {
+    response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:generateImages?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: request.prompt,
+          number_of_images: request.n || 1,
+          aspectRatio: '1:1',
+          safetyFilterLevel: 'block_some',
+          personGenerationMode: 'dont_allow',
+        }),
+      }
+    );
+  } catch (error) {
+    console.error('[Gemini Image Gen] Network error:', error);
+    throw new Error(`Network error: ${error instanceof Error ? error.message : 'Failed to fetch'}`);
+  }
+
+  console.log('[Gemini Image Gen] Response status:', response.status);
 
   if (!response.ok) {
     let errorMsg = 'Unknown error';
     try {
       const error = await response.json();
+      console.error('[Gemini Image Gen] API error response:', error);
       errorMsg = error.error?.message || error.message || JSON.stringify(error);
     } catch (e) {
       errorMsg = `HTTP ${response.status}: ${response.statusText}`;
     }
-    throw new Error(`Gemini image generation failed: ${errorMsg}`);
+    throw new Error(`Gemini: ${errorMsg}`);
   }
 
   const data = await response.json();
+  console.log('[Gemini Image Gen] Success, received data:', data);
   
   if (!data.images || data.images.length === 0) {
     throw new Error('No images returned from Gemini');
@@ -109,6 +132,8 @@ export async function generateImage(
   apiKey: string,
   request: ImageGenerationRequest
 ): Promise<ImageGenerationResponse[]> {
+  console.log('[Image Gen] Request:', { providerId, modelId, promptLength: request.prompt?.length });
+  
   if (!apiKey) {
     throw new Error('API key is required');
   }
@@ -133,6 +158,8 @@ export async function generateImage(
   if (!model.canGenerateImages) {
     throw new Error(`Model ${model.name} does not support image generation`);
   }
+
+  console.log('[Image Gen] Routing to provider:', providerId);
 
   // Route to appropriate provider's image generation
   switch (providerId) {
