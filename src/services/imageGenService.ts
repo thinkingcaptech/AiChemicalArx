@@ -67,20 +67,86 @@ async function generateImageWithOpenAI(
   }));
 }
 
-async function generateImageWithGemini(
+async function generateImageWithGrok(
   apiKey: string,
   request: ImageGenerationRequest
 ): Promise<ImageGenerationResponse[]> {
-  console.log('[Gemini Image Gen] Starting request with prompt:', request.prompt);
+  console.log('[Grok Image Gen] Starting request with prompt:', request.prompt);
   
-  // Gemini image generation uses the standard generateContent endpoint
-  // with response_modalities set to include Image
-  const model = 'gemini-2.0-flash-exp'; // Image generation model
+  let response: Response;
+  try {
+    // Grok uses Aurora model for image generation
+    response = await fetch('https://api.x.ai/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'grok-2-image',
+        prompt: request.prompt,
+        n: request.n || 1,
+      }),
+    });
+  } catch (error) {
+    console.error('[Grok Image Gen] Network error:', error);
+    throw new Error(`Network error: ${error instanceof Error ? error.message : 'Failed to fetch'}`);
+  }
+
+  console.log('[Grok Image Gen] Response status:', response.status);
+
+  if (!response.ok) {
+    let errorMsg = 'Unknown error';
+    try {
+      const error = await response.json();
+      console.error('[Grok Image Gen] API error response:', error);
+      errorMsg = error.error?.message || error.message || JSON.stringify(error);
+    } catch (e) {
+      errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new Error(`Grok: ${errorMsg}`);
+  }
+
+  const data = await response.json();
+  console.log('[Grok Image Gen] Success, received data:', data);
+  
+  if (!data.data || data.data.length === 0) {
+    throw new Error('No images returned from Grok');
+  }
+  
+  return data.data.map((item: { url: string; revised_prompt?: string }) => ({
+    imageUrl: item.url,
+    revisedPrompt: item.revised_prompt,
+  }));
+}
+
+async function generateImageWithGemini(
+  apiKey: string,
+  request: ImageGenerationRequest,
+  modelId: string
+): Promise<ImageGenerationResponse[]> {
+  console.log('[Gemini Image Gen] Starting request with model:', modelId, 'prompt:', request.prompt);
+  
+  // Map selected model to image-generation capable version
+  // Gemini image gen requires specific model names with image output support
+  let imageModel: string;
+  
+  if (modelId.includes('gemini-3-pro')) {
+    imageModel = 'gemini-2.0-flash-exp'; // Use experimental model for image gen
+  } else if (modelId.includes('gemini-2.5-flash') && !modelId.includes('lite')) {
+    imageModel = 'gemini-2.0-flash-exp';
+  } else if (modelId.includes('gemini-2.5-pro')) {
+    imageModel = 'gemini-2.0-flash-exp';
+  } else {
+    imageModel = 'gemini-2.0-flash-exp'; // Default fallback
+  }
+  
+  console.log('[Gemini Image Gen] Using image model:', imageModel);
   
   let response: Response;
   try {
     response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${imageModel}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -188,7 +254,9 @@ export async function generateImage(
     case 'openai':
       return generateImageWithOpenAI(apiKey, request);
     case 'gemini':
-      return generateImageWithGemini(apiKey, request);
+      return generateImageWithGemini(apiKey, request, modelId);
+    case 'grok':
+      return generateImageWithGrok(apiKey, request);
     default:
       throw new Error(`Image generation not supported for provider: ${providerId}`);
   }
