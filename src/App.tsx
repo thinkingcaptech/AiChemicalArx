@@ -6,6 +6,7 @@ import { ChatInput } from './components/ChatInput';
 import { SettingsModal } from './components/SettingsModal';
 import { WelcomeModal } from './components/WelcomeModal';
 import { useChat } from './hooks/useChat';
+import { generateImage } from './services/imageGenService';
 import type { APIKeys } from './types';
 
 const WELCOME_SHOWN_KEY = 'aichemyarx_welcome_shown';
@@ -14,6 +15,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   const {
     chats,
@@ -60,6 +62,36 @@ function App() {
     } catch (error) {
       // Error is handled in the hook
       console.error(error);
+    }
+  };
+
+  const handleGenerateImage = async (prompt: string) => {
+    if (!currentChat) return;
+    
+    setIsGeneratingImage(true);
+    try {
+      const apiKey = settings.apiKeys[currentProvider];
+      if (!apiKey) {
+        alert('API key not configured for this provider');
+        return;
+      }
+
+      const results = await generateImage(currentProvider, currentModel, apiKey, {
+        prompt: prompt,
+        n: 1,
+      });
+
+      if (results.length > 0) {
+        // Create a message with the generated image
+        const imageMessage = `Generated image for: "${prompt}"\n\n![Generated Image](${results[0].imageUrl})`;
+        await sendMessage(imageMessage);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to generate image';
+      alert(`Image generation failed: ${message}`);
+      console.error('Image generation error:', error);
+    } finally {
+      setIsGeneratingImage(false);
     }
   };
 
@@ -125,6 +157,8 @@ function App() {
           hasApiKey={hasApiKey}
           apiKeys={settings.apiKeys}
           onOpenSettings={() => setSettingsOpen(true)}
+          onGenerateImage={handleGenerateImage}
+          isGeneratingImage={isGeneratingImage}
         />
       </main>
 

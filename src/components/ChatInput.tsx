@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Square, ChevronDown, Lock } from 'lucide-react';
+import { Send, Square, ChevronDown, Lock, Wand2 } from 'lucide-react';
 import type { AIProvider, APIKeys } from '../types';
 import { AI_PROVIDERS } from '../config/providers';
+import { canGenerateImages } from '../services/imageGenService';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -13,6 +14,8 @@ interface ChatInputProps {
   hasApiKey: boolean;
   apiKeys: APIKeys;
   onOpenSettings: () => void;
+  onGenerateImage?: (prompt: string) => void;
+  isGeneratingImage?: boolean;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -25,6 +28,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   hasApiKey,
   apiKeys,
   onOpenSettings,
+  onGenerateImage,
+  isGeneratingImage,
 }) => {
   const [message, setMessage] = useState('');
   const [showProviderMenu, setShowProviderMenu] = useState(false);
@@ -33,6 +38,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const currentProvider = AI_PROVIDERS.find(p => p.id === provider);
   const currentModel = currentProvider?.models.find(m => m.id === model);
+  const supportsImageGeneration = canGenerateImages(provider, model);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -178,6 +184,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             className="w-full input-mystical rounded-xl px-4 py-3 pr-12 resize-none text-[var(--color-spirit)] placeholder-[var(--color-ethereal)]/50 disabled:opacity-50"
           />
         </div>
+
+        {/* Image Generation Button */}
+        {supportsImageGeneration && (
+          <button
+            type="button"
+            onClick={() => {
+              if (message.trim() && onGenerateImage && !isLoading && !isGeneratingImage) {
+                onGenerateImage(message.trim());
+              }
+            }}
+            disabled={!message.trim() || !hasApiKey || isLoading || isGeneratingImage}
+            title={supportsImageGeneration ? 'Generate image from prompt' : 'Model does not support image generation'}
+            className="p-3 rounded-xl bg-[var(--color-amethyst)] hover:bg-[var(--color-mystic)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <Wand2 className={`w-5 h-5 ${isGeneratingImage ? 'animate-spin' : ''}`} />
+          </button>
+        )}
 
         {isLoading ? (
           <button

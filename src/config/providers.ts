@@ -9,12 +9,12 @@ export const AI_PROVIDERS: AIProviderConfig[] = [
     baseUrl: 'https://api.openai.com/v1',
     iconColor: '#10a37f',
     models: [
-      { id: 'gpt-5.1', name: 'GPT-5.1', maxTokens: 200000, description: 'Best for coding & agentic tasks' },
-      { id: 'gpt-5-mini', name: 'GPT-5 Mini', maxTokens: 200000, description: 'Fast, cost-efficient for defined tasks' },
-      { id: 'gpt-5-nano', name: 'GPT-5 Nano', maxTokens: 128000, description: 'Fastest, most cost-efficient' },
-      { id: 'gpt-4o', name: 'GPT-4o', maxTokens: 128000, description: 'Previous flagship, complex tasks' },
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', maxTokens: 128000, description: 'Fast and efficient' },
-      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', maxTokens: 128000, description: 'Previous generation' },
+      { id: 'gpt-5.1', name: 'GPT-5.1', maxTokens: 200000, description: 'Best for coding & agentic tasks', canGenerateImages: true },
+      { id: 'gpt-5-mini', name: 'GPT-5 Mini', maxTokens: 200000, description: 'Fast, cost-efficient for defined tasks', canGenerateImages: true },
+      { id: 'gpt-5-nano', name: 'GPT-5 Nano', maxTokens: 128000, description: 'Fastest, most cost-efficient', canGenerateImages: false },
+      { id: 'gpt-4o', name: 'GPT-4o', maxTokens: 128000, description: 'Previous flagship, complex tasks', canGenerateImages: true },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', maxTokens: 128000, description: 'Fast and efficient', canGenerateImages: true },
+      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', maxTokens: 128000, description: 'Previous generation', canGenerateImages: true },
     ],
   },
   {
@@ -63,10 +63,10 @@ export const AI_PROVIDERS: AIProviderConfig[] = [
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     iconColor: '#4285f4',
     models: [
-      { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', maxTokens: 1048576, description: 'Most intelligent model, multimodal & agentic' },
-      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', maxTokens: 1048576, description: 'Best price-performance, fast thinking' },
-      { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash-Lite', maxTokens: 1048576, description: 'Ultra fast, cost-efficient' },
-      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', maxTokens: 2097152, description: 'Advanced thinking, code & STEM reasoning' },
+      { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', maxTokens: 1048576, description: 'Most intelligent model, multimodal & agentic', canGenerateImages: true },
+      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', maxTokens: 1048576, description: 'Best price-performance, fast thinking', canGenerateImages: true },
+      { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash-Lite', maxTokens: 1048576, description: 'Ultra fast, cost-efficient', canGenerateImages: false },
+      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', maxTokens: 2097152, description: 'Advanced thinking, code & STEM reasoning', canGenerateImages: true },
     ],
   },
 ];

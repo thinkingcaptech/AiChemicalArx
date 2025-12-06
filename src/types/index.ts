@@ -16,6 +16,7 @@ export interface AIModel {
   name: string;
   maxTokens: number;
   description?: string;
+  canGenerateImages?: boolean;
 }
 
 // Message Types
